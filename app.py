@@ -84,15 +84,11 @@ uploaded_file = st.file_uploader(
 if uploaded_file:
 
     try:
-
         text = ""
 
         with pdfplumber.open(uploaded_file) as pdf:
-
             for page in pdf.pages:
-
                 page_text = page.extract_text()
-
                 if page_text:
                     text += page_text
 
@@ -102,12 +98,14 @@ if uploaded_file:
         # SKILL DETECTION
         # ----------------------
 
-        found_skills = []
+        skill_counts = {}
 
         for skill in skills_db:
+            count = text.count(skill.lower())
+            if count > 0:
+                skill_counts[skill] = count
 
-            if skill.lower() in text:
-                found_skills.append(skill)
+        found_skills = list(skill_counts.keys())
 
         # ----------------------
         # RESUME SCORE
@@ -118,10 +116,8 @@ if uploaded_file:
         required_skills = role_skills[selected_role]
 
         missing_role_skills = [
-
             skill
             for skill in required_skills
-
             if skill not in found_skills
         ]
 
@@ -168,12 +164,9 @@ if uploaded_file:
         st.subheader("Detected Skills")
 
         if found_skills:
-
             for skill in found_skills:
                 st.success(skill.title())
-
         else:
-
             st.warning(
                 "No matching skills found."
             )
@@ -183,10 +176,8 @@ if uploaded_file:
         # ----------------------
 
         missing_skills = [
-
             skill
             for skill in skills_db
-
             if skill not in found_skills
         ]
 
@@ -201,12 +192,9 @@ if uploaded_file:
         st.subheader("Skill Analytics")
 
         if found_skills:
-
             skill_df = pd.DataFrame({
-
-                "Skill": found_skills,
-
-                "Count": [1] * len(found_skills)
+                "Skill": list(skill_counts.keys()),
+                "Count": list(skill_counts.values())
             })
 
             fig, ax = plt.subplots()
@@ -231,23 +219,20 @@ if uploaded_file:
         st.subheader("Skill Gap Analysis")
 
         if missing_role_skills:
-
             st.error(
                 "Missing Skills: "
                 + ", ".join(missing_role_skills)
             )
-
         else:
-
             st.success(
                 "Great! You match all core skills."
             )
+
         # ----------------------
         # JOB DESCRIPTION MATCHING
         # ----------------------
 
         if job_description:
-
             st.subheader("Job Match Score")
 
             vectorizer = TfidfVectorizer()
@@ -307,7 +292,6 @@ Missing Role Skills:
         )
 
     except Exception as e:
-
         st.error(
             f"Error processing resume: {e}"
         )
